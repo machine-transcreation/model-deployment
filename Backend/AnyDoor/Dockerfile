@@ -10,6 +10,6 @@ ENTRYPOINT ["/check.sh"]
 COPY builder/requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY src/update_yaml_paths.py src/handler.py src/
+COPY model/update_yaml_paths.py model/handler.py model/
 
-CMD ["sh", "-c", "python -u src/update_yaml_paths.py && python -u src/handler.py"]
+CMD ["sh", "-c", "python -u model/update_yaml_paths.py && python -u model/handler.py"]
