@@ -332,7 +332,8 @@ def handler(job):
     else:
         return {"error": "Invalid mode specified"}
 
-runpod.serverless.start({"handler": handler})
+if __name__ == "__main__":
+    runpod.serverless.start({"handler": handler})
 
 
 # import torch
