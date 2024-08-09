@@ -12,4 +12,4 @@ RUN pip install -r requirements.txt
 
 ADD src .
 
-CMD ["sh", "-c", "python -u src/update_yaml_paths.py && python -u src/handler.py"]
+CMD ["sh", "-c", "python -u /update_yaml_paths.py && python -u /handler.py"]
