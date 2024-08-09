@@ -25,8 +25,8 @@ if __name__ == "__main__":
     repo_root = os.path.dirname(os.path.abspath(__file__))
 
     replacements = {
-        'path/dinov2_vitg14_pretrain.pth': os.path.join(repo_root, 'model ckpts', 'dinov2_vitg14_pretrain.pth'),
-        'path/epoch=1-step=8687.ckpt': os.path.join(repo_root, 'model ckpts', 'epoch=1-step=8687.ckpt')
+        'path/dinov2_vitg14_pretrain.pth': os.path.join(repo_root, 'model_ckpts', 'dinov2_vitg14_pretrain.pth'),
+        'path/epoch=1-step=8687.ckpt': os.path.join(repo_root, 'model_ckpts', 'epoch=1-step=8687.ckpt')
     }
 
     yaml_files = [
