@@ -8,6 +8,8 @@ import base64
 import io
 import json
 
+st.set_page_config(layout="wide")
+
 @st.cache_resource
 def encode_pil_to_base64(pil_image):
     buffered = io.BytesIO()
@@ -31,7 +33,10 @@ def refine_mask(input_dict):
         }
     }
 
-    return json.dumps(input_json, indent=4)
+
+    input_json = json.dumps(input_json, indent=4)
+
+    return input_json
 
 @st.cache_resource
 def run_model(base_dict, ref_dict, strength, ddim_steps, scale, seed, enable_shape_control):
@@ -61,7 +66,10 @@ def run_model(base_dict, ref_dict, strength, ddim_steps, scale, seed, enable_sha
         }
     }
 
-    return json.dumps(input_json, indent=4)
+
+    input_json = json.dumps(input_json, indent=4)
+    
+    return input_json
 
 @st.cache_resource
 def duplicate_ref_mask_to_background(ref_mask, base_mask):
