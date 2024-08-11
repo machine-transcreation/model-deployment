@@ -29,6 +29,8 @@ from depth2image import load_midas, midas_process
 from annotator.canny import CannyDetector
 from canny2image import load_canny, canny_process
 
+models_loaded = False
+
 # Load all the models
 def load_models():
 
@@ -36,7 +38,6 @@ def load_models():
     global apply_hed, model_hed, ddim_sampler_hed
     global apply_midas, model_midas, ddim_sampler_midas
     global apply_canny, model_canny, ddim_sampler_canny
-    global models_loaded
 
     apply_mlsd, model_mlsd, ddim_sampler_mlsd = load_mlsd()
     apply_hed, model_hed, ddim_sampler_hed = load_hed()
@@ -168,10 +169,6 @@ def numpy_to_base64(np_array, image_format='PNG'):
 # HANDLER FUNCTION
 
 def handler(job):
-
-    if models_loaded is None:
-        global models_loaded
-        models_loaded = False
 
     if not models_loaded:
         load_models()
