@@ -169,6 +169,9 @@ def numpy_to_base64(np_array, image_format='PNG'):
 
 def handler(job):
     
+    if not models_loaded:
+        load_models()
+
     job_input = job["input"]
     model_params = generate_model_parameters(job_input['model_type'], base64_to_numpy(job_input['input_image']), job_input['prompt'], job_input['params_dict'])
     
