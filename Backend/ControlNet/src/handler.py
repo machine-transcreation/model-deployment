@@ -168,7 +168,11 @@ def numpy_to_base64(np_array, image_format='PNG'):
 # HANDLER FUNCTION
 
 def handler(job):
-    
+
+    if models_loaded is None:
+        global models_loaded
+        models_loaded = False
+
     if not models_loaded:
         load_models()
 
