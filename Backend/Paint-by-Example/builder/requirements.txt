@@ -207,6 +207,7 @@ rfc3986-validator==0.1.1
 rich==13.7.1
 rpds-py==0.20.0
 rsa==4.9
+runpod
 s3transfer==0.10.2
 safetensors==0.4.4
 scikit-image==0.20.0
