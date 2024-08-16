@@ -65,7 +65,7 @@ def load_model_from_config(config, ckpt, vae_ckpt=None, verbose=False):
 config = OmegaConf.load("configs/generate.yaml")
 model = load_model_from_config(config, "checkpoints/instruct-pix2pix-00-22000.ckpt", None)
 
-# util functio s
+# util functions
 def load_image_from_base64(base64_str: str):
     image_bytes = base64.b64decode(base64_str)
     image = Image.open(BytesIO(image_bytes)).convert('RGB')
@@ -128,6 +128,20 @@ def run_inference(image_url: str, resolution: int, steps: int, cfg_text: float, 
     edited_image.save(bytes, format = "PNG")
 
     return base64.b64encode(bytes.getvalue()).decode("utf-8")
+
+"""
+{
+  "input": {
+    "image_url": "https://utfs.io/f/d5c5f258-20bd-41f3-89b8-5458adc337f8-59skze.png",
+    "edit_prompt": "change the bear into a elephant",
+    "steps": 50,
+    "resolution": 512,
+    "cfg_text": 7.5,
+    "cfg_img": 1.5,
+    "seed": null
+  }
+}
+"""
 
 # takes in an input json schema and runs model inference, outputs in image in bytes
 def handler(job):

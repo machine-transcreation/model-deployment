@@ -55,6 +55,7 @@ jsonschema==4.23.0
 jsonschema-specifications==2023.12.1
 kiwisolver==1.4.5
 kornia==0.6.0
+lavis @ git+https://github.com/salesforce/LAVIS.git@20230801-blip-diffusion-edit
 lazy-loader==0.4
 linkify-it-py==2.0.3
 lmdb==1.5.1
@@ -75,7 +76,7 @@ omegaconf==2.1.1
 open-clip-torch==2.0.2
 opencv-contrib-python==4.3.0.36
 opencv-python==4.10.0.84
-opencv-python-headless==4.10.0.84
+opencv-python-headless==4.5.5.64
 orjson==3.10.7
 packaging==24.1
 pandas==2.0.3
@@ -129,7 +130,7 @@ tensorboard-data-server==0.7.2
 test-tube==0.7.5
 threadpoolctl==3.5.0
 tifffile==2023.7.10
-timm==0.6.12
+timm==0.4.12
 tokenizers==0.12.1
 toml==0.10.2
 toolz==0.12.1
