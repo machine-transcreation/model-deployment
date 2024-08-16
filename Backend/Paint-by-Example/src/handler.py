@@ -131,8 +131,8 @@ def get_tensor_clip(normalize=True, toTensor=True):
 def get_models ():
     seed_everything(321)
 
-    config = OmegaConf.load("/home/azureuser/image-transcreation/Paint_by_Example/Paint-by-Example/configs/v1.yaml")
-    model = load_model_from_config(config, "/home/azureuser/image-transcreation/Paint_by_Example/Paint-by-Example/model.ckpt")
+    config = OmegaConf.load("/configs/v1.yaml")
+    model = load_model_from_config(config, "/Paint-by-Example/checkpoints/model.ckpt")
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model = model.to(device)

@@ -32,7 +32,6 @@ certifi==2024.7.4
 charset-normalizer==3.3.2
 clean-fid==0.1.35
 click==8.1.7
-clip==1.0
 clip-anytorch==2.6.0
 cloudpathlib==0.18.1
 coloredlogs==15.0.1
@@ -150,7 +149,6 @@ opencv-python==4.1.2.30
 opencv-python-headless==4.10.0.84
 overrides==7.7.0
 packaging==24.1
-Paint-by-Example==0.0.1
 pandas==2.0.3
 pandocfilters==1.5.1
 parso==0.8.4
@@ -229,7 +227,6 @@ spacy-loggers==1.0.5
 srsly==2.4.8
 stack-data==0.6.3
 streamlit==1.37.1
-taming-transformers==0.0.1
 tenacity==8.5.0
 tensorboard==2.14.0
 tensorboard-data-server==0.7.2
