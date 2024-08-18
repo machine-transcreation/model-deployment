@@ -20,11 +20,9 @@ from ldm.models.diffusion.plms import PLMSSampler
 from io import BytesIO
 from diffusers.pipelines.stable_diffusion.safety_checker import StableDiffusionSafetyChecker
 from transformers import AutoFeatureExtractor
-import clip
 from torchvision.transforms import Resize
 import runpod
 import base64
-from streamlit_js_eval import streamlit_js_eval
 
 def get_safety():    
     wm = "Paint-by-Example"
@@ -132,7 +130,7 @@ def get_models ():
     seed_everything(321)
 
     config = OmegaConf.load("/configs/v1.yaml")
-    model = load_model_from_config(config, "/Paint-by-Example/checkpoints/model.ckpt")
+    model = load_model_from_config(config, "/checkpoints/model.ckpt")
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model = model.to(device)

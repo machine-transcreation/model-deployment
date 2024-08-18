@@ -1,12 +1,16 @@
+import os
+from dotenv import load_dotenv, dotenv_values
 import requests
 
-url = 'https://api.runpod.ai/v2/skgg94h4lchsy0/runsync'
+load_dotenv(".env")
+
+url = os.getenv("PAINT_ENDPOINT")
 headers = {
-    'Authorization': 'Bearer 3N2FXXVFVBW6ANKM5FRIFVWHP1701AN3TYEW3CAC',
+    'Authorization': f'Bearer {os.getenv("RUNPOD_KEY")}',
     'Content-Type': 'application/json'
 }
 
-with open('base_test.json', 'r') as file:
+with open('Paint-by-Example/src/base_test.json', 'r') as file:
     payload = file.read()
 
 response = requests.post(url, headers=headers, data=payload)
