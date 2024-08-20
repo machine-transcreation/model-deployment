@@ -159,8 +159,8 @@ def run_local(
 ):
     global config, model, sampler, device 
 
-    input_image = input_image.resize(512, 512)
-    mask_image = mask_image.resize(512, 512)
+    input_image = input_image.resize((512, 512))
+    mask_image = mask_image.resize((512, 512))
 
     batch_size = n_samples
     n_rows = n_rows if n_rows > 0 else batch_size

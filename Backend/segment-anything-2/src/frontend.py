@@ -1,65 +1,60 @@
 import streamlit as st
 from streamlit_drawable_canvas import st_canvas
 from PIL import Image
-import numpy as np
 
-st.title("Point Plotter with Image Upload")
+def main():
+    st.title("Image Plotter: Green + and Red - Points")
 
-# Image upload
-uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 
-if uploaded_file is not None:
-    image = Image.open(uploaded_file)
-    img_width, img_height = image.size
-else:
-    img_width, img_height = 400, 400
-
-# Radio buttons for point selection
-point_color = st.radio("Select point color:", ("Red", "Green"))
-
-# Canvas for plotting points
-canvas_result = st_canvas(
-    fill_color="rgba(255, 0, 0, 0.8)" if point_color == "Red" else "rgba(0, 255, 0, 0.8)",
-    stroke_width=1,
-    stroke_color="rgba(0, 0, 0, 0)",
-    background_color="#eee",
-    background_image=image if uploaded_file else None,
-    update_streamlit=True,
-    height=img_height,
-    width=img_width,
-    drawing_mode="point",
-    point_display_radius=10,
-    key="canvas",
-)
-
-# Initialize session state for storing points
-if 'red_points' not in st.session_state:
-    st.session_state.red_points = []
-if 'green_points' not in st.session_state:
-    st.session_state.green_points = []
-
-# Update points based on canvas result
-if canvas_result.json_data is not None:
-    objects = canvas_result.json_data["objects"]
-    if len(objects) > 0:
-        last_object = objects[-1]
-        if point_color == "Red":
-            st.session_state.red_points.append((last_object["left"], last_object["top"]))
+    if uploaded_file is not None:
+        image = Image.open(uploaded_file)
+        
+        width, height = image.size
+        
+        st.write("Draw on the image:")
+        
+        draw_mode = st.radio("Select the point type:", ("Green +", "Red -"))
+        if draw_mode == "Green +":
+            stroke_color = "#00FF00"
         else:
-            st.session_state.green_points.append((last_object["left"], last_object["top"]))
+            stroke_color = "#FF0000"
 
-# Create Mask button
-if st.button("Create Mask"):
-    st.write("Red points coordinates:")
-    for point in st.session_state.red_points:
-        st.write(point)
-    
-    st.write("Green points coordinates:")
-    for point in st.session_state.green_points:
-        st.write(point)
+        if "green_points" not in st.session_state:
+            st.session_state.green_points = []
+        if "red_points" not in st.session_state:
+            st.session_state.red_points = []
 
-# Clear points button
-if st.button("Clear Points"):
-    st.session_state.red_points = []
-    st.session_state.green_points = []
-    st.experimental_rerun()
+        canvas_result = st_canvas(
+            fill_color="rgba(0, 0, 0, 0)",  
+            stroke_width=3,
+            stroke_color=stroke_color,
+            background_image=image,
+            update_streamlit=True,
+            height=height,
+            width=width,
+            drawing_mode="point",
+            point_display_radius=5,
+            key="canvas",
+        )
+
+        if canvas_result.json_data is not None:
+            current_green_points = []
+            current_red_points = []
+
+            for obj in canvas_result.json_data["objects"]:
+                point = (obj["left"], obj["top"])
+                if obj["stroke"] == "#00FF00":
+                    current_green_points.append(point)
+                elif obj["stroke"] == "#FF0000":  
+                    current_red_points.append(point)
+
+            st.session_state.green_points = current_green_points
+            st.session_state.red_points = current_red_points
+
+        if st.button("Create Mask"):
+            st.write("Green + Points:", st.session_state.green_points)
+            st.write("Red - Points:", st.session_state.red_points)
+
+if __name__ == "__main__":
+    main()
