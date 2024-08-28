@@ -55,9 +55,13 @@ def main():
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 
     if uploaded_file is not None:
-        image = Image.open(uploaded_file).resize((512, 512))
-        
-        width, height = image.size
+
+        orig_image = Image.open(uploaded_file)
+        orig_width, orig_height = orig_image.size
+
+
+        image = image.resize((512, 512))        
+        width, height = orig_image.size
         
         st.write("Draw on the image:")
         
@@ -118,7 +122,7 @@ def main():
                 print(masks.shape)
 
             result_image = mask_to_pillow(image, mask, borders=True)
-            st.image(result_image, caption = "mask")
+            st.image(result_image.resize((orig_width, orig_height)), caption = "mask")
         
 
 if __name__ == "__main__":
