@@ -5,6 +5,9 @@ from PIL import Image
 import torch
 from sam2.build_sam import build_sam2
 from sam2.sam2_image_predictor import SAM2ImagePredictor
+import matplotlib.pyplot as plt
+import cv2
+from io import BytesIO
 
 @st.cache_resource
 def build_predictor():
@@ -15,6 +18,36 @@ def build_predictor():
     return predictor
 
 predictor = build_predictor()
+
+def mask_to_pillow(image, mask, random_color=False, borders=True):
+    if random_color:
+        color = np.concatenate([np.random.random(3), np.array([0.6])], axis=0)
+    else:
+        color = np.array([30/255, 144/255, 255/255, 0.6])
+    
+    h, w = mask.shape[-2:]
+    mask = mask.astype(np.uint8)
+    mask_image = mask.reshape(h, w, 1) * color.reshape(1, 1, -1)
+    
+    if borders:
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        contours = [cv2.approxPolyDP(contour, epsilon=0.01, closed=True) for contour in contours]
+        mask_image = cv2.drawContours(mask_image, contours, -1, (1, 1, 1, 0.5), thickness=2)
+    
+    plt.figure(figsize=(10, 10))
+    plt.imshow(image)
+    plt.imshow(mask_image, alpha=0.6)
+    plt.axis('off')
+    
+    buf = BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
+    buf.seek(0)
+    
+    pil_image = Image.open(buf)
+    buf.seek(0)  
+    plt.close()  
+    
+    return pil_image
 
 def main():
     st.title("SAM2: Point-Based")
@@ -81,7 +114,12 @@ def main():
             with torch.inference_mode(), torch.autocast("cuda", dtype=torch.bfloat16):
                 predictor.set_image(np.asarray(image))
                 masks, _, _ = predictor.predict(point_coords = np.array(sam_points), point_labels = np.array(sam_labels), multimask_output = False)
-                print(masks)
+                mask = masks[0]
+                print(masks.shape)
+
+            result_image = mask_to_pillow(image, mask, borders=True)
+            st.image(result_image, caption = "mask")
+        
 
 if __name__ == "__main__":
     main()
