@@ -9,8 +9,8 @@ import requests
 import base64
 import os
 import io
-import json
 import runpod
+import cv2
 
 def init_device():
     global device
@@ -69,6 +69,33 @@ def pil_image_to_base64(image: Image.Image) -> str:
     img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
     return img_str
 
+def mask_to_pillow(image, mask, borders=True):
+    color = np.array([30/255, 144/255, 255/255, 0.6])
+    
+    h, w = mask.shape[-2:]
+    mask = mask.astype(np.uint8)
+    mask_image = mask.reshape(h, w, 1) * color.reshape(1, 1, -1)
+    
+    if borders:
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        contours = [cv2.approxPolyDP(contour, epsilon=0.01, closed=True) for contour in contours]
+        mask_image = cv2.drawContours(mask_image, contours, -1, (1, 1, 1, 0.5), thickness=2)
+    
+    plt.figure(figsize=(10, 10))
+    plt.imshow(image)
+    plt.imshow(mask_image, alpha=0.6)
+    plt.axis('off')
+    
+    buf = BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
+    buf.seek(0)
+    
+    pil_image = Image.open(buf)
+    buf.seek(0) 
+    plt.close()  
+    
+    return pil_image
+
 def handler(job):
     
     device = init_device()
@@ -78,24 +105,22 @@ def handler(job):
     image_b64 = input["image"]
     image = load_image(image_b64)
 
-    R, G, B, A = input["R"], input["G"], input["B"], input["A"]
+    orig_width, orig_height = image.size
 
-    coord1, coord2 = input["coord1"], input["coord2"]
-    x1, y1 = coord1["x"], coord1["y"]
-    x2, y2 = coord2["x"], coord2["y"]
+    image = image.resize((512, 512))
 
-    input_box = np.array([x1, y1, x2, y2])
+    points = np.array(input["points"])
+    labels = np.array(input["labels"])
 
     predictor.set_image(image)
 
     masks, confidence, _ = predictor.predict(
-        point_coords=None,
-        point_labels=None,
-        box=input_box[None, :],
+        point_coords=points,
+        point_labels=labels,
         multimask_output=False,
     )
 
-    mask = create_colored_mask_image(masks, R, G, B, A)
+    mask = mask_to_pillow(image, masks[0], borders = True).resize((orig_width, orig_height))
     mask_b64 = pil_image_to_base64(mask)
     
     return {"mask" : mask_b64}
