@@ -104,6 +104,10 @@ def handler(job):
     input = job["input"]
     image_b64 = input["image"]
     image = load_image(image_b64)
+    R = input["R"]
+    G = input["G"]
+    B = input["B"]
+    A = input["A"]
 
     orig_width, orig_height = image.size
 
@@ -120,7 +124,7 @@ def handler(job):
         multimask_output=False,
     )
 
-    mask = mask_to_pillow(image, masks[0], borders = True).resize((orig_width, orig_height))
+    mask = create_colored_mask_image(mask = masks, R = R, G = G, B = B, A = A)
     mask_b64 = pil_image_to_base64(mask)
     
     return {"mask" : mask_b64}
