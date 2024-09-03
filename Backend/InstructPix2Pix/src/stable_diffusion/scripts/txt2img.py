@@ -25,8 +25,8 @@ from transformers import AutoFeatureExtractor
 
 # load safety model
 safety_model_id = "CompVis/stable-diffusion-safety-checker"
-safety_feature_extractor = AutoFeatureExtractor.from_pretrained(safety_model_id)
-safety_checker = StableDiffusionSafetyChecker.from_pretrained(safety_model_id)
+safety_feature_extractor = AutoFeatureExtractor.from_pretrained(safety_model_id, cache_dir = "/feature_extractor_weights/")
+safety_checker = StableDiffusionSafetyChecker.from_pretrained(safety_model_id, cache_dir = "/checker_weights/")
 
 
 def chunk(it, size):

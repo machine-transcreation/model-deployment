@@ -124,7 +124,7 @@ def handler(job):
         multimask_output=False,
     )
 
-    mask = create_colored_mask_image(mask = masks, R = R, G = G, B = B, A = A)
+    mask = create_colored_mask_image(mask = masks, R = R, G = G, B = B, A = A).resize((orig_width, orig_height))
     mask_b64 = pil_image_to_base64(mask)
     
     return {"mask" : mask_b64}
