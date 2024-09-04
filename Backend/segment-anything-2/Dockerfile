@@ -2,6 +2,8 @@ FROM python:3.12.4-bookworm
 
 WORKDIR /
 
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
+
 COPY builder/requirements.txt .
 RUN pip install -r requirements.txt
 
