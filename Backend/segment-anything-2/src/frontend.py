@@ -10,19 +10,6 @@ import cv2
 import base64
 from io import BytesIO
 
-def overlay_mask(base_image: Image, mask_image: Image):
-    base_image = base_image.convert("RGBA")
-    
-    mask_image = mask_image.convert("L")  
-    
-    mask_image = mask_image.resize(base_image.size)
-    
-    gray_overlay = Image.new("RGBA", base_image.size, color=(int(30/255 * 255), int(144/255 * 255), int(255/255 * 255), int(0.6 * 255)))
-    
-    overlay = Image.composite(gray_overlay, base_image, mask_image)
-    
-    return overlay
-
 def create_colored_mask_image(mask, R, G, B, A):
 
     R, G, B, A = map(lambda x: max(0, min(255, x)), [R, G, B, A])
@@ -50,7 +37,7 @@ def SAM2(image: Image, points: np.array, labels: np.array, predictor: SAM2ImageP
     )
 
     mask = create_colored_mask_image(mask = masks, R = rgba[0], G = rgba[1], B = rgba[2], A = rgba[3]).resize((orig_width, orig_height))
-    
+
     return mask
 
 @st.cache_resource
@@ -63,35 +50,35 @@ def build_predictor():
 
 predictor = build_predictor()
 
-def mask_to_pillow(image, mask, random_color=False, borders=True):
-    if random_color:
-        color = np.concatenate([np.random.random(3), np.array([0.6])], axis=0)
-    else:
-        color = np.array([30/255, 144/255, 255/255, 0.6])
-    
-    h, w = mask.shape[-2:]
-    mask = mask.astype(np.uint8)
-    mask_image = mask.reshape(h, w, 1) * color.reshape(1, 1, -1)
-    
+def overlay(image, mask, borders=True):
+    image_np = np.array(image)
+    mask_np = np.array(mask.convert('L'))  
+
+    h, w = image_np.shape[:2]
+    mask_np = cv2.resize(mask_np, (w, h))
+
+    color = np.array([50 / 255, 50 / 255, 50 / 255, 1])  
+
+    mask_image = mask_np.reshape(h, w, 1) / 255.0 * color.reshape(1, 1, -1)
+
     if borders:
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        contours, _ = cv2.findContours(mask_np, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         contours = [cv2.approxPolyDP(contour, epsilon=0.01, closed=True) for contour in contours]
         mask_image = cv2.drawContours(mask_image, contours, -1, (1, 1, 1, 0.5), thickness=2)
-    
+
     plt.figure(figsize=(10, 10))
-    plt.imshow(image)
+    plt.imshow(image_np)
     plt.imshow(mask_image, alpha=0.6)
     plt.axis('off')
-    
-    # Convert Matplotlib plot to PIL image
+
     buf = BytesIO()
     plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
     buf.seek(0)
-    
+
     pil_image = Image.open(buf)
-    buf.seek(0)  # Reset the buffer's current position to 0 before returning the image
-    plt.close()  # Close the figure after saving to buffer
-    
+    buf.seek(0) 
+    plt.close()
+
     return pil_image
 
 def main():
@@ -112,6 +99,7 @@ def main():
         if uploaded_file is not None:
             
             orig_image = Image.open(uploaded_file)
+            orig_width, orig_height = orig_image.size
             
             image = orig_image.resize((512, 512))
             
@@ -171,9 +159,9 @@ def main():
                     sam_points.append(point)
                     sam_labels.append(0)
 
-                mask = SAM2(image = image, points = np.array(sam_points), labels = np.array(sam_labels), predictor = predictor, rgba = (50, 50, 50, 50))
-
-                st.image(overlay_mask(orig_image, mask), caption = "mask")
+                mask = SAM2(image = image, points = np.array(sam_points), labels = np.array(sam_labels), predictor = predictor, rgba = (50, 50, 50, 255))
+                
+                st.image(overlay(image, mask))
 
                 st.session_state.mask = mask
     
