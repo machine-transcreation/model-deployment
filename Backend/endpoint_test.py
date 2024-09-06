@@ -1,16 +1,16 @@
 import os
-from dotenv import load_dotenv, dotenv_values
+from dotenv import load_dotenv
 import requests
 
 load_dotenv(".env")
 
-url = os.getenv("PAINT_ENDPOINT")
+url = os.getenv("ANYDOOR_ENDPOINT")
 headers = {
     'Authorization': f'Bearer {os.getenv("RUNPOD_KEY")}',
     'Content-Type': 'application/json'
 }
 
-with open('Paint-by-Example/src/base_test.json', 'r') as file:
+with open('testing/anydoor.json', 'r') as file:
     payload = file.read()
 
 response = requests.post(url, headers=headers, data=payload)

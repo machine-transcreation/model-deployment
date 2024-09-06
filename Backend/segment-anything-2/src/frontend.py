@@ -2,16 +2,25 @@ import numpy as np
 import streamlit as st
 from streamlit_drawable_canvas import st_canvas
 from PIL import Image
-import torch
-from sam2.build_sam import build_sam2
-from sam2.sam2_image_predictor import SAM2ImagePredictor
 import matplotlib.pyplot as plt
 import cv2
 import base64
 from io import BytesIO
+import os 
+from dotenv import load_dotenv
+import requests
+import json
+
+@st.cache_data
+def load_runpod_info():
+    load_dotenv("../../.env")
+    
+    url = os.getenv("SAM2_ENDPOINT")
+    key = os.getenv("RUNPOD_KEY")
+
+    return url, key
 
 def create_colored_mask_image(mask, R, G, B, A):
-
     R, G, B, A = map(lambda x: max(0, min(255, x)), [R, G, B, A])
     
     if mask.ndim > 2:
@@ -26,29 +35,62 @@ def create_colored_mask_image(mask, R, G, B, A):
     
     return image
 
-def SAM2(image: Image, points: np.array, labels: np.array, predictor: SAM2ImagePredictor, rgba: tuple):
-    orig_width, orig_height = image.size
-    predictor.set_image(image.resize((512, 512)))
+def image_to_base64(image: Image) -> str:
+    buffer = BytesIO()
+    
+    image.save(buffer, format='PNG')
+    buffer.seek(0)
+    image_base64 = base64.b64encode(buffer.read()).decode('utf-8')
 
-    masks, confidence, _ = predictor.predict(
-        point_coords=points,
-        point_labels=labels,
-        multimask_output=False,
+    return image_base64
+
+def load_image_from_base64(base64_str: str) -> Image.Image:
+    image_bytes = base64.b64decode(base64_str)
+    image = Image.open(BytesIO(image_bytes)).convert("RGB")
+    return image
+
+endpoint_url, key = load_runpod_info()
+
+def SAM2(image: Image, points: np.array, labels: np.array, rgba: tuple):
+
+    image_b64 = image_to_base64(image)
+
+    points = points.tolist()
+    labels = labels.tolist()
+
+    url = endpoint_url
+
+    headers = {
+        'Authorization': f'Bearer {key}',
+        'Content-Type': 'application/json'
+    }
+
+    input_dict = {
+        "input": {
+            "image": image_b64,
+            "points": points,
+            "labels": labels,
+            "R": 50,
+            "G": 50,
+            "B": 50,
+            "A": 255
+        }
+    }
+
+    payload = json.dumps(input_dict)
+
+    response = requests.post(
+        url = url,
+        headers = headers,
+        data = payload
     )
 
-    mask = create_colored_mask_image(mask = masks, R = rgba[0], G = rgba[1], B = rgba[2], A = rgba[3]).resize((orig_width, orig_height))
+    mask_b64 = json.loads(response.text)["output"]["mask"]
 
-    return mask
+    
 
-@st.cache_resource
-def build_predictor():
-    checkpoint = "./checkpoints/sam2_hiera_large.pt"
-    model_cfg = "sam2_hiera_l.yaml"
-    predictor = SAM2ImagePredictor(build_sam2(model_cfg, checkpoint))
+    return load_image_from_base64(mask_b64)
 
-    return predictor
-
-predictor = build_predictor()
 
 def overlay(image, mask, borders=True):
     image_np = np.array(image)
@@ -159,7 +201,8 @@ def main():
                     sam_points.append(point)
                     sam_labels.append(0)
 
-                mask = SAM2(image = image, points = np.array(sam_points), labels = np.array(sam_labels), predictor = predictor, rgba = (50, 50, 50, 255))
+                with st.spinner("Generating mask"):
+                    mask = SAM2(image = image, points = np.array(sam_points), labels = np.array(sam_labels), rgba = (50, 50, 50, 255))
                 
                 st.image(overlay(image, mask))
 
