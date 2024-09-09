@@ -381,22 +381,33 @@ def main():
     page = st.sidebar.radio("Select Mode", ["Point", "Draw"])
 
     if page == "Point":
-        base_file = st.file_uploader("Choose base image...", type=["jpg", "jpeg", "png"], key="base_image_uploader")
-        ref_file = st.file_uploader("Choose reference image...", type=["jpg", "jpeg", "png"], key="ref_image_uploader")
+        col1, col2 = st.columns(2)
+
+        with col1:
+            base_file = st.file_uploader("Choose base image...", type=["jpg", "jpeg", "png"], key="base_image_uploader")
+
+        with col2:
+            ref_file = st.file_uploader("Choose reference image...", type=["jpg", "jpeg", "png"], key="ref_image_uploader")
 
         if base_file is not None and ref_file is not None:
-            if "base_original_image" not in st.session_state:
-                st.session_state["base_original_image"] = Image.open(base_file)
-                st.session_state["base_image"] = st.session_state["base_original_image"].resize((256, 256))
-            if "ref_original_image" not in st.session_state:
-                st.session_state["ref_original_image"] = Image.open(ref_file)
-                st.session_state["ref_image"] = st.session_state["ref_original_image"].resize((256, 256))
 
-            st.subheader("Reference Image")
-            process_image("ref")
+            with col1:
+                if "base_original_image" not in st.session_state:
+                    st.session_state["base_original_image"] = Image.open(base_file)
+                    st.session_state["base_image"] = st.session_state["base_original_image"].resize((256, 256))
+
+            with col2:
+                if "ref_original_image" not in st.session_state:
+                    st.session_state["ref_original_image"] = Image.open(ref_file)
+                    st.session_state["ref_image"] = st.session_state["ref_original_image"].resize((256, 256))
+
+            with col2:
+                st.subheader("Reference Image")
+                process_image("ref")
             
-            st.subheader("Base Image")
-            process_image("base")
+            with col1:
+                st.subheader("Base Image")
+                process_image("base")
 
             if "ref_mask_created" in st.session_state and "base_mask_created" in st.session_state:
                 st.success("Both masks have been created. You can now switch to the Draw mode.")
