@@ -14,8 +14,6 @@ negative_prompt = "low quality, bad quality, sketches"
 
 controlnet_conditioning_scale = 0.5
 
-vae = AutoencoderKL.from_pretrained("./sdxl-vae-fp16-fix", torch_dtype=torch.float16).to("cuda")
-
 controlnet = ControlNetXSAdapter.from_pretrained(
     "./Testing-ConrolNetXS-SDXL-canny", torch_dtype=torch.float16
 ).to("cuda")

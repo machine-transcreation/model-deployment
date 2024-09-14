@@ -49,8 +49,8 @@ ax.set_xticks(x)
 ax.set_xticklabels(labels)
 ax.legend()
 
-ax.set_ylim(min(min(cosine_similarities), min(structural_similarities)) - 0.1, 1.1)
+ax.set_ylim(0, 1)
+ax.set_yticks(np.arange(0, 1.1, 0.1))
 
-# Show the plot
 plt.tight_layout()
 plt.show()
