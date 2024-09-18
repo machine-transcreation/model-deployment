@@ -19,7 +19,7 @@ controlnet = ControlNetXSAdapter.from_pretrained(
 ).to("cuda")
 
 pipe = StableDiffusionXLControlNetXSPipeline.from_pretrained(
-    "./stable-diffusion-xl-base-1.0", controlnet=controlnet, torch_dtype=torch.float16
+    "./stable-diffusion-2-1-base", controlnet=controlnet, torch_dtype=torch.float16
 ).to("cuda")
 
 pipe.enable_model_cpu_offload()
