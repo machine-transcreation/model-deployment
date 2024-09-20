@@ -15,7 +15,7 @@ negative_prompt = "low quality, bad quality, sketches"
 controlnet_conditioning_scale = 0.5
 
 controlnet = ControlNetXSAdapter.from_pretrained(
-    "./Testing-ControlNetXS-SDXL-canny", torch_dtype=torch.float16
+    "./Testing-ConrolNetXS-SD2.1-canny", torch_dtype=torch.float16
 ).to("cuda")
 
 pipe = StableDiffusionXLControlNetXSPipeline.from_pretrained(
