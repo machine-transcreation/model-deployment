@@ -4,15 +4,6 @@ WORKDIR /
 
 RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
 
-RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.sh | bash
-RUN yum install git-lfs -y
-RUN git lfs install
-
-WORKDIR /src/
-RUN git clone https://huggingface.co/diffusers/controlnet-canny-sdxl-1.0/
-RUN git clone https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/
-RUN git clone https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/
-
 COPY builder/requirements.txt .
 
 RUN pip install --no-cache-dir --progress-bar off -r requirements.txt --no-use-pep517
