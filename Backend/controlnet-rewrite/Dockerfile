@@ -15,8 +15,6 @@ RUN git clone https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/
 
 COPY builder/requirements.txt .
 
-
-# RUN pip install -r requirements.txt
 RUN pip install --no-cache-dir --progress-bar off -r requirements.txt --no-use-pep517
 
 
