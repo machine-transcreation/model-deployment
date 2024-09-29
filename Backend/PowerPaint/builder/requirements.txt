@@ -1,0 +1,10 @@
+--index-url https://test.pypi.org/simple/
+accelerate
+controlnet-aux==0.0.3
+diffusers==0.27.0
+--extra-index-url https://pypi.org/simple gradio==3.41.0
+mmengine
+opencv-python
+transformers==4.28.0
+fastapi==0.65.2
+runpod
