@@ -1,89 +1,100 @@
 import os
 import torch
-import numpy as np
-import matplotlib.pyplot as plt
 from PIL import Image
 from transformers import CLIPProcessor, CLIPModel
-from sklearn.metrics.pairwise import cosine_similarity
-from skimage.metrics import structural_similarity
+from skimage.metrics import structural_similarity as ssim
+import numpy as np
+import matplotlib.pyplot as plt
 
 model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
 processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
-base_dir = "./images"
-original_dir = os.path.join(base_dir, "Original")
-models_dirs = {
-    "Platform": os.path.join(base_dir, "Platform"),
-    "Google Imagen 3": os.path.join(base_dir, "Google Imagen"),
-    "OpenAI Dalle 3": os.path.join(base_dir, "Dalle"),
-    "Flux": os.path.join(base_dir, "Flux")
+def compute_ssim(image1, image2):
+    image1 = image1.resize(image2.size)
+    image1_gray = np.array(image1.convert('L'))
+    image2_gray = np.array(image2.convert('L'))
+    return ssim(image1_gray, image2_gray)
+
+original_folder = 'images/Original/'
+HILITE_folder = 'images/HILITE/'
+google_folder = 'images/Google Imagen 3/'
+dalle_folder = 'images/Dall-E/'
+
+original_images = sorted(os.listdir(original_folder))
+
+cosine_sims = {'HILITE': [], 'Google Imagen 3': [], 'Dall-E': []}
+ssims = {'HILITE': [], 'Google Imagen 3': [], 'Dall-E': []}
+
+prompts = {
+    "black bear": "make this bear a black bear",
+    "changing bear": "change black bear to white bear",
+    "chinese school": "Make this school extremely and obviously Chinese",
+    "duck-swan": "change the duck to a swan",
+    "indian dal": "replace the ramen with dal (lentil soup)",
+    "jaguar tiger": "change the jaguar into a tiger",
+    "matcha-chai": "change the matcha into a cup of chai",
+    "roti": "change pancake to roti or indian food",
+    "tasty panner": "change the churrasco on the grill to paneer"
 }
 
-original_images = []
-original_image_info = {}
-for index, image_path in enumerate(os.listdir(original_dir)):
-    img = Image.open(f'{original_dir}/{image_path}')
-    original_images.append(img)
-    original_image_info[index] = {"name": image_path.replace(".png", "").replace(".jpg", ""), "image": img}
+for image_name in original_images:
+    original_image_path = os.path.join(original_folder, image_name)
+    original_image = Image.open(original_image_path)
 
-all_images = [original_images]  
-model_image_info = {}
-for model_name, model_dir in models_dirs.items():
-    model_images = []
-    for image_path in os.listdir(model_dir):
-        img = Image.open(f'{model_dir}/{image_path}')
-        model_images.append(img)
-    model_image_info[model_name] = model_images
-    all_images.append(model_images)
-
-flattened_images = original_images[:]
-for model_images in model_image_info.values():
-    flattened_images.extend(model_images)
-
-inputs = processor(images=flattened_images, return_tensors="pt", padding=True)
-
-with torch.no_grad():
-    image_features = model.get_image_features(**inputs)
-
-def compare_images(image_features, img1_idx, img2_idx, original_image, compared_image):
-    cosine_sim = cosine_similarity(image_features[img1_idx].unsqueeze(0), image_features[img2_idx].unsqueeze(0))[0][0]
-    ssim = structural_similarity(
-        np.array(original_image.convert("L")), np.array(compared_image.convert("L"))
-    )
-    return cosine_sim, ssim
-
-cosine_similarities = []
-structural_similarities = []
-labels = []
-
-for index, (original_image_name, original_image) in original_image_info.items():
-    for model_name, model_images in model_image_info.items():
-        compared_image = model_images[index]
-        compared_image_idx = len(original_images) + list(model_image_info.keys()).index(model_name) * len(original_images) + index
+    for folder_name, folder_path in zip(['HILITE', 'Google Imagen 3', 'Dall-E'], 
+                                        [HILITE_folder, google_folder, dalle_folder]):
+        comparison_image_path = os.path.join(folder_path, image_name)
+        comparison_image = Image.open(comparison_image_path)
         
-        cosine_sim, ssim = compare_images(image_features, index, compared_image_idx, original_image, compared_image)
+        inputs_original = processor(images=original_image, return_tensors="pt", padding=True)
+        inputs_comparison = processor(images=comparison_image, return_tensors="pt", padding=True)
         
-        cosine_similarities.append(cosine_sim)
-        structural_similarities.append(ssim)
-        labels.append(f'{model_name} - {original_image_name}')
+        with torch.no_grad():
+            embedding_original = model.get_image_features(**inputs_original)
+            embedding_comparison = model.get_image_features(**inputs_comparison)
+        
+        cos_sim = torch.nn.functional.cosine_similarity(embedding_original, embedding_comparison).item()
+        cosine_sims[folder_name].append(cos_sim)
+        
+        ssim_value = compute_ssim(original_image, comparison_image)
+        ssims[folder_name].append(ssim_value)
 
-x = np.arange(len(labels)) 
-width = 0.35  
+avg_cosine_sims = {key: np.mean(values) for key, values in cosine_sims.items()}
+avg_ssims = {key: np.mean(values) for key, values in ssims.items()}
+
+categories = list(avg_cosine_sims.keys())
+avg_cosine = list(avg_cosine_sims.values())
+avg_ssim = list(avg_ssims.values())
 
 fig, ax = plt.subplots(figsize=(10, 6))
 
-rects1 = ax.bar(x - width/2, cosine_similarities, width, label='Cosine Similarity')
-rects2 = ax.bar(x + width/2, structural_similarities, width, label='Structural Similarity')
+width = 0.35
+x = np.arange(len(categories))
 
-ax.set_xlabel('Model - Original Image')
-ax.set_ylabel('Similarity Score')
-ax.set_title('Cosine and SSIM Comparison for Model Outputs')
+rects1 = ax.bar(x - width/2, avg_cosine, width, label='Cosine Similarity', color='#1f77b4')
+rects2 = ax.bar(x + width/2, avg_ssim, width, label='Structural Similarity', color='#ff7f0e')
+
+ax.set_ylabel('Average Similarity Score')
+ax.set_title('Average Similarity Scores for Image Edits')
 ax.set_xticks(x)
-ax.set_xticklabels(labels, rotation=90)
+ax.set_xticklabels(categories)
 ax.legend()
 
-ax.set_ylim(0, 1)
-ax.set_yticks(np.arange(0, 1.1, 0.1))
+def autolabel(rects):
+    """Attach a text label above each bar in *rects*, displaying its height."""
+    for rect in rects:
+        height = rect.get_height()
+        ax.annotate(f'{height:.2f}',
+            xy = (rect.get_x() + rect.get_width() / 2, height),
+            xytext = (0, 3), 
+            textcoords = "offset points",
+            ha = 'center', va = 'bottom'
+        )
 
-plt.tight_layout()
+autolabel(rects1)
+autolabel(rects2)
+plt.yticks(np.arange(0, 1, step=0.05))
+
+fig.tight_layout()
+plt.savefig('results.png') 
 plt.show()
