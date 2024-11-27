@@ -142,14 +142,14 @@ class PowerPaintController:
         else:
             # brushnet-based version
             unet = UNet2DConditionModel.from_pretrained(
-                "runwayml/stable-diffusion-v1-5",
+                "./checkpoints/ppt-v2/stable-diffusion-v1-5/",
                 subfolder="unet",
                 revision=None,
                 torch_dtype=weight_dtype,
                 local_files_only=local_files_only,
             )
             text_encoder_brushnet = CLIPTextModel.from_pretrained(
-                "runwayml/stable-diffusion-v1-5",
+                "./checkpoints/ppt-v2/stable-diffusion-v1-5/",
                 subfolder="text_encoder",
                 revision=None,
                 torch_dtype=weight_dtype,
@@ -342,8 +342,9 @@ class PowerPaintController:
             ).images[0]
         else:
             # for brushnet-based method
-            np_inpimg = np.array(input_image["image"])
-            np_inmask = np.array(input_image["mask"]) / 255.0
+            np_inpimg = np.array(input_image["image"].convert("RGB"))
+            np_inmask = np.array(input_image["mask"].convert("RGB")) / 255.0
+            np_inmask = (np_inmask > 0.5).astype(float)
             np_inpimg = np_inpimg * (1 - np_inmask)
             input_image["image"] = Image.fromarray(np_inpimg.astype(np.uint8)).convert("RGB")
             result = self.pipe(
@@ -555,14 +556,14 @@ def image_to_base64(image):
 
 def handler(job):
 
-    inputs = job["input"]
+    inputs = job["input"]["inputs"]
 
     args = argparse.ArgumentParser()
     args.add_argument("--weight_dtype", type=str, default="float16")
     args.add_argument("--checkpoint_dir", type=str, default="./checkpoints/ppt-v2")
     args.add_argument("--version", type=str, default="ppt-v2")
     args.add_argument(
-        "--local_files_only", action="store_true", help="enable it to use cached files without requesting from the hub"
+        "--local_files_only", default = True, action="store_true", help="enable it to use cached files without requesting from the hub"
     )
     args = args.parse_args()
 
