@@ -285,168 +285,28 @@ def encode_pil_to_base64(pil_image):
 
 def handler(job):
     job_input = job["input"]
-    mode = job_input.get("mode", "run_local")
 
-    if mode == "run_local":
-        base_image = decode_base64_image(job_input["base_image"])
-        base_mask = decode_base64_image(job_input["base_mask"])
-        ref_image = decode_base64_image(job_input["ref_image"])
-        ref_mask = decode_base64_image(job_input["ref_mask"])
-        
-        strength = job_input.get("strength", 1.0)
-        ddim_steps = job_input.get("ddim_steps", 50)
-        scale = job_input.get("scale", 7.5)
-        seed = job_input.get("seed", 42)
-        enable_shape_control = job_input.get("enable_shape_control", False)
+    base_image = decode_base64_image(job_input["base_image"])
+    base_mask = decode_base64_image(job_input["base_mask"])
+    ref_image = decode_base64_image(job_input["ref_image"])
+    ref_mask = decode_base64_image(job_input["ref_mask"])
+    
+    strength = job_input.get("image_scale", 1.0)
+    ddim_steps = job_input.get("ddim_steps", 50)
+    scale = job_input.get("guidance_scale", 7.5)
+    seed = job_input.get("seed", 42)
+    enable_shape_control = job_input.get("mode", False)
 
-        result = run_local(
-            {"image": base_image, "mask": base_mask},
-            {"image": ref_image, "mask": ref_mask},
-            strength, ddim_steps, scale, seed, enable_shape_control
-        )
+    result = run_local(
+        {"image": base_image, "mask": base_mask},
+        {"image": ref_image, "mask": ref_mask},
+        strength, ddim_steps, scale, seed, enable_shape_control
+    )
 
-        result_image = Image.fromarray(result[0])
-        result_b64 = encode_pil_to_base64(result_image)
-        
-        return {"image": result_b64}
-
-    elif mode == "refine_mask":
-        ref_image = decode_base64_image(job_input["ref_image"])
-        ref_mask = decode_base64_image(job_input["ref_mask"])
-
-        ref_image_np = np.array(ref_image)
-        ref_mask_np = np.array(ref_mask.convert("L"))
-        ref_mask_np = np.where(ref_mask_np > 128, 1, 0).astype(np.uint8)
-
-        refined_ref_mask = process_image_mask(ref_image_np, ref_mask_np)
-        
-        refined_ref_mask_rgba = np.zeros((refined_ref_mask.shape[0], refined_ref_mask.shape[1], 4), dtype=np.uint8)
-        refined_ref_mask_rgba[..., 3] = refined_ref_mask * 204  # Alpha channel at 80% opacity
-        refined_ref_mask_rgba[..., 0:3] = np.where(refined_ref_mask[..., None], 181, 0)
-        
-        refined_ref_mask_pil = Image.fromarray(refined_ref_mask_rgba, mode="RGBA")
-        refined_mask_b64 = encode_pil_to_base64(refined_ref_mask_pil)
-        
-        return {"refined_mask": refined_mask_b64}
-
-    else:
-        return {"error": "Invalid mode specified"}
+    result_image = Image.fromarray(result[0])
+    result_b64 = encode_pil_to_base64(result_image)
+    
+    return {"image": result_b64}
 
 if __name__ == "__main__":
     runpod.serverless.start({"handler": handler})
-
-
-# import torch
-# from PIL import Image
-# import cv2
-# import numpy as np
-# import io
-# import base64
-# from fastapi import FastAPI, File, UploadFile, Form
-# from pydantic import BaseModel
-# from diffusers import (
-#     StableDiffusionControlNetPipeline,
-#     ControlNetModel,
-#     UniPCMultistepScheduler,
-# )
-
-# app = FastAPI()
-
-
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-# class ModelInfo(BaseModel):
-#     control_type: str
-#     model_path: str
-#     scheduler_config: dict
-
-# def get_canny_image(image, low_threshold, high_threshold):
-#     image_array = np.array(image)
-#     canny_image = cv2.Canny(image_array, low_threshold, high_threshold)
-#     canny_image = canny_image[:, :, None]
-#     canny_image = np.concatenate([canny_image, canny_image, canny_image], axis=2)
-#     return Image.fromarray(canny_image)
-
-# def compress_image(image, max_size):
-#     width, height = image.size
-#     if width > height:
-#         if width > max_size:
-#             height = int(max_size * height / width)
-#             width = max_size
-#     else:
-#         if height > max_size:
-#             width = int(max_size * width / height)
-#             height = max_size
-#     resized_image = image.resize((width, height))
-#     return resized_image
-
-# def load_model(control_type, use_cpu=False):
-#     try:
-#         torch_dtype = torch.float32 if use_cpu else torch.float16
-#         device = "cpu" if use_cpu else "cuda"
-        
-#         controlnet = ControlNetModel.from_pretrained(
-#             f"lllyasviel/sd-controlnet-{control_type}",
-#             torch_dtype=torch_dtype
-#         )
-#         pipe = StableDiffusionControlNetPipeline.from_pretrained(
-#             "runwayml/stable-diffusion-v1-5",
-#             controlnet=controlnet,
-#             torch_dtype=torch_dtype,
-#             safety_checker=None,
-#             revision="fp16" if not use_cpu else "main"
-#         )
-#         pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
-        
-#         if not use_cpu:
-#             pipe.enable_model_cpu_offload()
-#             if torch.cuda.is_available():
-#                 pipe.enable_xformers_memory_efficient_attention()
-#         else:
-#             pipe = pipe.to("cpu")
-        
-#         return pipe
-#     except Exception as e:
-#         return None
-    
-# @app.post("/generate")
-# async def generate_image(
-#     control_type: str = Form(...),
-#     prompt: str = Form(...),
-#     image: UploadFile = File(...),
-#     low_threshold: int = Form(100),
-#     high_threshold: int = Form(200),
-# ):
-#     try:
-#         contents = await image.read()
-#         input_image = Image.open(io.BytesIO(contents))
-#         input_image = compress_image(input_image, 512) 
-        
-
-#         if control_type == "canny":
-#             control_image = get_canny_image(input_image, low_threshold, high_threshold)
-#         else:
-#             control_image = input_image
-
-#         pipe = load_model(control_type)
-        
-#         with torch.inference_mode():
-#             output_image = pipe(
-#                 prompt,
-#                 image=control_image,
-#                 num_inference_steps=20,
-#                 guidance_scale=7.5,
-#             ).images[0]
-        
-#         buffered = io.BytesIO()
-#         output_image.save(buffered, format="PNG")
-#         img_str = base64.b64encode(buffered.getvalue()).decode()
-        
-#         return {"image": img_str}
-    
-#     except Exception as e:
-#         return {"error": str(e)}
-
-# if __name__ == "__main__":
-#     import uvicorn
-#     uvicorn.run(app, host="0.0.0.0", port=5400)
