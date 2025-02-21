@@ -55,27 +55,27 @@ def initialize_model():
     model = model.cuda()
     ddim_sampler = DDIMSampler(model)
 
-def init_iseg():
-    global iseg_model
-    model_path = './iseg/coarse_mask_refine.pth'
-    iseg_model = BaselineModel().eval()
-    weights = torch.load(model_path , map_location='cpu')['state_dict']
-    iseg_model.load_state_dict(weights, strict= True)
-    return iseg_model
+# def init_iseg():
+#     global iseg_model
+#     model_path = './iseg/coarse_mask_refine.pth'
+#     iseg_model = BaselineModel().eval()
+#     weights = torch.load(model_path , map_location='cpu')['state_dict']
+#     iseg_model.load_state_dict(weights, strict= True)
+#     return iseg_model
 
 initialize_model()
-init_iseg()
+# init_iseg()
 
     
-def process_image_mask(image_np, mask_np):
-    global iseg_model
-    if iseg_model is None:
-        iseg_model = init_iseg()
-    img = torch.from_numpy(image_np.transpose((2, 0, 1)))
-    img = img.float().div(255).unsqueeze(0)
-    mask = torch.from_numpy(mask_np).float().unsqueeze(0).unsqueeze(0)
-    pred = iseg_model(img, mask)['instances'][0,0].detach().numpy() > 0.5 
-    return pred.astype(np.uint8)
+# def process_image_mask(image_np, mask_np):
+#     global iseg_model
+#     if iseg_model is None:
+#         iseg_model = init_iseg()
+#     img = torch.from_numpy(image_np.transpose((2, 0, 1)))
+#     img = img.float().div(255).unsqueeze(0)
+#     mask = torch.from_numpy(mask_np).float().unsqueeze(0).unsqueeze(0)
+#     pred = iseg_model(img, mask)['instances'][0,0].detach().numpy() > 0.5 
+#     return pred.astype(np.uint8)
 
 def crop_back( pred, tar_image,  extra_sizes, tar_box_yyxx_crop):
     H1, W1, H2, W2 = extra_sizes
@@ -266,7 +266,7 @@ def run_local(base, ref, strength, ddim_steps, scale, seed, enable_shape_control
     ref_image = np.asarray(ref_image)
     ref_mask = np.asarray(ref_mask)
     ref_mask = np.where(ref_mask > 128, 1, 0).astype(np.uint8)
-    ref_mask = process_image_mask(ref_image, ref_mask)
+    # ref_mask = process_image_mask(ref_image, ref_mask) ommitted considering the usage of SAM2
 
     synthesis = inference_single_image(ref_image.copy(), ref_mask.copy(), image.copy(), mask.copy(), 
                                         strength, ddim_steps, scale, seed, enable_shape_control)

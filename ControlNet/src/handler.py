@@ -91,7 +91,7 @@ def handler(job):
 
     image = np.asarray(load_image(job_input["base_image"]))
     prompt = job_input["target_prompt"]
-    image_resolution = None # Yet to be Established => replace with real image resolution?
+    image_resolution = None # Yet to be Established => replace with real image resolution? => int(image.shape[:2]) or a fixed value (e.g. 512)?
     strength = float(job_input["image_scale"])
     scale = float(job_input["guidance_scale"])
     low_tresh = None # Yet to be Established

@@ -147,12 +147,12 @@ def run_inference(image_url: str, resolution: int, steps: int, cfg_text: float, 
 def handler(job):
     job_input = job["input"]
 
-    image = job_input['image_url']
-    edit_prompt = job_input['edit_prompt']
-    steps = int(job_input['steps'])
-    resolution = int(job_input['resolution'])
-    cfg_text = float(job_input['cfg_text'])
-    cfg_img = float(job_input['cfg_img'])
+    image = job_input['base_image']
+    edit_prompt = job_input['target_prompt']
+    steps = int(job_input['ddim_steps'])
+    resolution = None # Yet to be Established => replace with real image resolution? => int(image.shape[:2]) or a fixed value (e.g. 512)?
+    cfg_text = float(job_input['text_scale'])
+    cfg_img = float(job_input['image_scale'])
     seed = job_input['seed']
 
     final_image_bytes = run_inference(
