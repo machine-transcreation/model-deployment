@@ -89,14 +89,14 @@ def process(input_image, prompt, a_prompt, n_prompt, num_samples, image_resoluti
 def handler(job):
     job_input = job["input"]
 
-    image = np.asarray(load_image(job_input["image"]))
-    prompt = job_input["prompt"]
-    image_resolution = int(job_input["resolution"])
-    strength = float(job_input["strength"])
+    image = np.asarray(load_image(job_input["base_image"]))
+    prompt = job_input["target_prompt"]
+    image_resolution = None # Yet to be Established => replace with real image resolution?
+    strength = float(job_input["image_scale"])
     scale = float(job_input["guidance_scale"])
-    low_tresh = int(job_input["low_thresh"])
-    high_thresh = int(job_input["high_thresh"])
-    steps = int(job_input["steps"])
+    low_tresh = None # Yet to be Established
+    high_thresh = None # Yet to be Established
+    steps = int(job_input["ddim_steps"])
 
     generated_image = Image.fromarray(process(
         input_image = image,
