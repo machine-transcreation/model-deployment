@@ -150,7 +150,7 @@ def handler(job):
     image = job_input['base_image']
     edit_prompt = job_input['target_prompt']
     steps = int(job_input['ddim_steps'])
-    resolution = None # Yet to be Established => replace with real image resolution? => int(image.shape[:2]) or a fixed value (e.g. 512)?
+    resolution = 512
     cfg_text = float(job_input['text_scale'])
     cfg_img = float(job_input['image_scale'])
     seed = job_input['seed']
