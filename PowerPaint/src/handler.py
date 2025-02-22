@@ -556,7 +556,7 @@ def image_to_base64(image):
 
 def handler(job):
 
-    inputs = job["input"]["inputs"]
+    inputs = job["input"]
 
     args = argparse.ArgumentParser()
     args.add_argument("--weight_dtype", type=str, default="float16")
@@ -572,37 +572,37 @@ def handler(job):
     controller = PowerPaintController(weight_dtype, args.checkpoint_dir, args.local_files_only, args.version)
 
     # Validate inputs
-    required_keys = ['input_image', 'mask', 'prompt', 'negative_prompt', 'task', 'ddim_steps', 'scale', 'seed']
+    required_keys = ['base_image', 'base_mask', 'target_prompt', 'negative_prompt', 'mode', 'ddim_steps', 'text_scale', 'seed']
     for key in required_keys:
         if key not in inputs:
             raise ValueError(f"Missing required input: {key}")
 
-    if inputs['task'] not in ['object-removal', 'text-guided']:
+    if inputs['mode'] not in ['object-removal', 'text-guided']:
         raise ValueError("Task must be either 'object-removal' or 'text-guided'")
 
     # Combine input image and mask
     input_images = {}
-    input_images["image"] = base64_to_image(inputs['input_image']).copy()
-    input_images["mask"] = base64_to_image(inputs['mask']).copy()
+    input_images["base_image"] = base64_to_image(inputs['base_image']).copy()
+    input_images["base_mask"] = base64_to_image(inputs['base_mask']).copy()
 
     # Prepare inputs for the controller
     controller_inputs = [
         input_images,  # input_image + Mask
-        inputs['prompt'] if inputs['task'] == 'text-guided' else "",  # text_guided_prompt
-        inputs['negative_prompt'] if inputs['task'] == 'text-guided' else "",  # text_guided_negative_prompt
+        inputs['target_prompt'] if inputs['mode'] == 'text-guided' else "",  # text_guided_prompt
+        inputs['negative_prompt'] if inputs['mode'] == 'text-guided' else "",  # text_guided_negative_prompt
         "",  # shape_guided_prompt (not used)
         "",  # shape_guided_negative_prompt (not used)
         1,  # fitting_degree (not used)
         inputs['ddim_steps'],
-        inputs['scale'],
+        inputs['text_scale'],
         inputs['seed'],
-        inputs['task'],
+        inputs['mode'],
         1,  # vertical_expansion_ratio (not used)
         1,  # horizontal_expansion_ratio (not used)
         "",  # outpaint_prompt (not used)
         "",  # outpaint_negative_prompt (not used)
-        inputs['prompt'] if inputs['task'] == 'object-removal' else "",  # removal_prompt
-        inputs['negative_prompt'] if inputs['task'] == 'object-removal' else "",  # removal_negative_prompt
+        inputs['target_prompt'] if inputs['mode'] == 'object-removal' else "",  # removal_prompt
+        inputs['negative_prompt'] if inputs['mode'] == 'object-removal' else "",  # removal_negative_prompt
     ]
 
     # Run the inference
